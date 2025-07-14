@@ -1,5 +1,5 @@
 # Backend Dockerfile for Go API with Gophercloud and Terraform
-FROM golang:1.22-alpine
+FROM golang:1.23-alpine
 
 # Install system dependencies
 RUN apk add --no-cache \
@@ -20,21 +20,51 @@ RUN wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform
 # Verify Terraform installation
 RUN terraform version
 
-# Install Air for hot reload (use specific version compatible with Go 1.22)
+# Install Air for hot reload
 RUN go install github.com/cosmtrek/air@v1.49.0
 
 # Set working directory
 WORKDIR /app
 
+# Copy source code
+COPY src/backend/ ./
+
+# Initialize module if needed
+RUN if [ ! -f go.mod ]; then go mod init cloud-provider; fi
+
+# Add all dependencies explicitly
+# RUN go get github.com/gin-gonic/gin@v1.9.1
+# RUN go get github.com/gophercloud/gophercloud@v1.14.1
+# RUN go get github.com/spf13/viper@v1.17.0
+# RUN go get github.com/gophercloud/gophercloud/openstack/identity/v3/projects
+# RUN go get github.com/gophercloud/gophercloud/openstack/compute/v2/extensions/keypairs
+# RUN go get github.com/gophercloud/gophercloud/openstack/compute/v2/servers
+# RUN go get github.com/gophercloud/gophercloud/openstack/compute/v2/images
+# RUN go get github.com/gophercloud/gophercloud/openstack/compute/v2/flavors
+# RUN go get github.com/gophercloud/gophercloud/openstack/networking/v2/networks
+# RUN go get github.com/gophercloud/gophercloud/openstack/networking/v2/subnets
+# RUN go get github.com/gophercloud/gophercloud/openstack/networking/v2/ports
+# RUN go get github.com/gophercloud/gophercloud/openstack/blockstorage/v3/volumes
+
+# Download all dependencies and rebuild go.sum
+RUN go mod download
+RUN go mod tidy
+
+# Verify all dependencies are properly cached
+RUN go mod verify
+
 # Create necessary directories
 RUN mkdir -p /app/terraform/state /app/tmp
+
+# Test build to ensure everything works
+RUN go build -o /tmp/test ./cmd/api
 
 # Expose port
 EXPOSE 8080
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
-# Default command - will be overridden in docker-compose for development
-CMD ["tail", "-f", "/dev/null"]
+# Run with Air for hot reload
+CMD ["air", "-c", ".air.toml"]
