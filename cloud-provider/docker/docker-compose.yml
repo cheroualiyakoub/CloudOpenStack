@@ -9,6 +9,7 @@ services:
     volumes:
       - ../src/backend:/app:cached
       - go-mod-cache:/go/pkg/mod
+      - ../src/terraform/clients:/app/terraform/clients
     environment:
       - GIN_MODE=debug
       - CGO_ENABLED=0

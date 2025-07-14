@@ -28,6 +28,7 @@ WORKDIR /app
 
 # Copy source code
 COPY src/backend/ ./
+COPY src/terraform/ ./
 
 # Initialize module if needed
 RUN if [ ! -f go.mod ]; then go mod init cloud-provider; fi
