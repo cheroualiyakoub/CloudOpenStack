@@ -1,0 +1,14 @@
+environment: development
+port: 8080
+
+openstack:
+  auth_url: "http://your-openstack-auth-url:5000/v3"
+  username: "admin"
+  password: "secret"
+  tenant_name: "admin"
+  region: "RegionOne"
+  domain_name: "Default"
+
+terraform:
+  working_dir: "/app/terraform"
+  state_dir: "/app/terraform/state"

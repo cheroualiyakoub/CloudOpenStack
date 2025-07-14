@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ../src/backend
+      dockerfile: ../../docker/backend.Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - GO_ENV=development
+      - CGO_ENABLED=0
+      - PORT=8080
+    volumes:
+      - ../src/backend:/app
+      - go-mod-cache:/go/pkg/mod
+      - terraform-cache:/root/.terraform.d
+    working_dir: /app
+    command: air
+    networks:
+      - cloud-provider-network
+    stdin_open: true
+    tty: true
+
+volumes:
+  go-mod-cache:
+  terraform-cache:
+
+networks:
+  cloud-provider-network:
+    driver: bridge
