@@ -2,12 +2,12 @@ environment: development
 port: 8080
 
 openstack:
-  auth_url: "http://your-openstack-auth-url:5000/v3"
+  auth_url: "http://94.237.83.40/identity/v3"
   username: "admin"
   password: "secret"
   tenant_name: "admin"
   region: "RegionOne"
-  domain_name: "Default"
+  domain_name: "default"
 
 terraform:
   working_dir: "/app/terraform"

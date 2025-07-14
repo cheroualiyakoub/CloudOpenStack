@@ -1,56 +1,71 @@
 package main
 
 import (
-	"log"
-	"net/http"
-	"os"
+    "log"
+    "net/http"
 
-	"github.com/gin-gonic/gin"
+    "github.com/gin-gonic/gin"
+    "cloud-provider/internal/config"
+    "cloud-provider/internal/api/handlers"
 )
 
 func main() {
-	// Set Gin mode
-	gin.SetMode(gin.DebugMode)
+    // Load configuration
+    log.Println("Loading configuration...")
+    cfg, err := config.Load()
+    log.Println("Configuration loaded successfully!")
+    if err != nil {
+        log.Fatal("Failed to load config:", err)
+    }
 
-	// Initialize router
-	router := gin.Default()
+    // Initialize Gin router
+    router := gin.Default()
 
-	// Add CORS middleware
-	router.Use(func(c *gin.Context) {
-		c.Header("Access-Control-Allow-Origin", "*")
-		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(204)
-			return
-		}
-		
-		c.Next()
-	})
+    // Add CORS middleware if needed
+    router.Use(func(c *gin.Context) {
+        c.Header("Access-Control-Allow-Origin", "*")
+        c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+        c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+        
+        if c.Request.Method == "OPTIONS" {
+            c.AbortWithStatus(204)
+            return
+        }
+        
+        c.Next()
+    })
 
-	// Health check endpoint
-	router.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  "healthy",
-			"service": "cloud-provider-api",
-			"message": "API is running successfully!",
-		})
-	})
+    // Health check endpoint
+    router.GET("/health", func(c *gin.Context) {
+        c.JSON(http.StatusOK, gin.H{
+            "status": "healthy",
+            "service": "cloud-provider-api",
+        })
+    })
 
-	// Simple hello endpoint
-	router.GET("/hello", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "Hello from Cloud Provider API!",
-		})
-	})
+    // Hello endpoint
+    router.GET("/hello", func(c *gin.Context) {
+        c.JSON(http.StatusOK, gin.H{
+            "message": "Hello from Cloud Provider API",
+        })
+    })
 
-	// Get port from environment or use default
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080"
-	}
+    // Initialize handlers
+    log.Println("About to create ProjectHandler...")
 
-	log.Printf("Starting Cloud Provider API server on port %s", port)
-	log.Fatal(router.Run(":" + port))
+    projectHandler := handlers.NewProjectHandler(cfg)
+    // API v1 routes
+    v1 := router.Group("/api/v1")
+    {
+        // Project routes
+        v1.GET("/projects", projectHandler.ListProjects)
+        v1.GET("/projects/:id", projectHandler.GetProject)
+		v1.POST("/projects", projectHandler.CreateProject)
+    }
+
+    // Start server
+    log.Println("Starting Cloud Provider API server on port 8080")
+    if err := router.Run(":8080"); err  != nil {
+        log.Fatal("Failed to start server:", err)
+    }
 }
