@@ -10,11 +10,21 @@ services:
       - ../src/backend:/app:cached
       - go-mod-cache:/go/pkg/mod
       - ../src/terraform/clients:/app/terraform/clients
+      - ../src/terraform/projects:/app/terraform/projects
+      - ../src/terraform/projects:/app/terraform/networks
     environment:
       - GIN_MODE=debug
       - CGO_ENABLED=0
+      - OS_AUTH_URL
+      - OS_USERNAME
+      - OS_PASSWORD
+      - OS_TENANT_NAME
+      - OS_REGION
+      - TF_WORKING_DIR
     networks:
       - cloud-provider-network
+    env_file:
+      - ../src/.env
     restart: unless-stopped
 
 volumes:
