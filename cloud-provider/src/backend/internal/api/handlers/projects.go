@@ -4,12 +4,14 @@ import (
     "net/http"
 	"fmt"
 	"os"
+    "log"
 
     "github.com/gin-gonic/gin"
     "github.com/gophercloud/gophercloud"
     "github.com/gophercloud/gophercloud/openstack"
     "github.com/gophercloud/gophercloud/openstack/identity/v3/projects"
-    "cloud-provider/internal/config"
+    "cloud-provider/src/backend/internal/config"
+    "cloud-provider/src/backend/terraform/terraform_utilis" 
 )
 
 type ProjectHandler struct {
@@ -95,37 +97,56 @@ func (h *ProjectHandler) CreateProject(c *gin.Context) {
     var req struct {
         Name        string `json:"name" binding:"required"`
         Description string `json:"description"`
-        DomainID    string `json:"domain_id" binding:"required"`
+        enabled      bool   `json:"enable" binding:"required"`
     }
     if err := c.ShouldBindJSON(&req); err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
         return
     }
 
-    // Generate Terraform file only (do NOT create project in OpenStack yet)
+    // 1. Prepare project directory
+    projectDir := fmt.Sprintf("/app/terraform/projects/%s", req.Name)
+    if err := os.MkdirAll(projectDir, 0755); err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create project directory: " + err.Error()})
+        return
+    }
+
+    // 2. Write main.tf (resource definition)
     tfContent := fmt.Sprintf(`
 resource "openstack_identity_project_v3" "%s" {
   name        = "%s"
   description = "%s"
-  domain_id   = "%s"
+  enabled     = %t
+  domain_id   = "default"
 }
-`, req.Name, req.Name, req.Description, req.DomainID)
-
-    tfPath := fmt.Sprintf("/app/terraform/clients/%s.tf", req.Name)
-    err := os.WriteFile(tfPath, []byte(tfContent), 0644)
-    if err != nil {
-        pwd, _ := os.Getwd()
-        c.JSON(http.StatusInternalServerError, gin.H{
-            "error": "Failed to write Terraform file: " + err.Error(),
-            "pwd": pwd,
-			"path": tfPath,
-			"request": req,
-        })
+`, req.Name, req.Name, req.Description, req.enabled)
+    tfPath := fmt.Sprintf("%s/main.tf", projectDir)
+    if err := os.WriteFile(tfPath, []byte(tfContent), 0644); err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to write Terraform file: " + err.Error()})
         return
     }
 
+    // 3. Copy provider.tf using your utility function
+    providerSrc := "/app/terraform/projects/provider.tf"
+    providerDst := fmt.Sprintf("%s/provider.tf", projectDir)
+    if err := terraform_utilis.CopyFile(providerSrc, providerDst); err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to copy provider file: " + err.Error()})
+        return
+    }
+
+    // 4. Prepare variables
+    vars := terraform_utilis.GetTerraformConf()
+
+    // 5. Apply Terraform using your utility function
+    if err := terraform_utilis.ApplyTerraform(projectDir, vars); err != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Terraform apply failed: " + err.Error()})
+        return
+    }
+
+    log.Printf("Terraform file created and applied at %s", tfPath)
     c.JSON(http.StatusCreated, gin.H{
         "terraform_file": tfPath,
-        "message": "Terraform file generated. Apply it to create the project in OpenStack.",
+        "message": "Terraform file generated and applied to create the project in OpenStack.",
     })
 }
+

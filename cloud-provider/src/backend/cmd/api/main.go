@@ -5,8 +5,8 @@ import (
     "net/http"
 
     "github.com/gin-gonic/gin"
-    "cloud-provider/internal/config"
-    "cloud-provider/internal/api/handlers"
+    "cloud-provider/src/backend/internal/config"
+    "cloud-provider/src/backend/internal/api/handlers"
 )
 
 func main() {
@@ -61,6 +61,11 @@ func main() {
         v1.GET("/projects", projectHandler.ListProjects)
         v1.GET("/projects/:id", projectHandler.GetProject)
 		v1.POST("/projects", projectHandler.CreateProject)
+        v1.POST("/networks", projectHandler.CreateNetwork)
+        v1.POST("/subnets", projectHandler.CreateSubnet)
+        v1.POST("/routers", projectHandler.CreateRouter)
+        v1.POST("/router-interfaces", projectHandler.CreateRouterInterface)
+        v1.POST("/flavors", projectHandler.CreateFlavor)
     }
 
     // Start server
