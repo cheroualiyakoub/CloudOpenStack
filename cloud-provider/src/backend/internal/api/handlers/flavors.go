@@ -6,9 +6,13 @@ import (
     "net/http"
     "log"
 
+
     "github.com/gin-gonic/gin"
     "cloud-provider/src/backend/terraform/terraform_utilis"
 )
+
+
+
 
 // POST /api/v1/flavors
 func (h *ProjectHandler) CreateFlavor(c *gin.Context) {
@@ -36,7 +40,7 @@ resource "openstack_compute_flavor_v2" "%s" {
   vcpus = %d
   disk  = %d
 }
-`, req.Name, req.Name, req.RAM, req.VCPUs, req.Disk)
+`, terraform_utilis.CleanResourceName(req.Name), req.Name, req.RAM, req.VCPUs, req.Disk)
     tfPath := fmt.Sprintf("%s/flavor.tf", flavorDir)
     if err := os.WriteFile(tfPath, []byte(tfContent), 0644); err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to write Terraform file: " + err.Error()})

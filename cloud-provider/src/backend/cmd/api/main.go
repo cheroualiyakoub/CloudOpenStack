@@ -66,6 +66,10 @@ func main() {
         v1.POST("/routers", projectHandler.CreateRouter)
         v1.POST("/router-interfaces", projectHandler.CreateRouterInterface)
         v1.POST("/flavors", projectHandler.CreateFlavor)
+        v1.POST("/security-groups", projectHandler.CreateSecurityGroup)
+        v1.POST("/keypairs", projectHandler.CreateKeyPair)
+        v1.POST("/images", projectHandler.CreateImage)
+        v1.POST("/instances", projectHandler.CreateInstance)
     }
 
     // Start server
