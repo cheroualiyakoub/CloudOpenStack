@@ -7,11 +7,12 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ../src/backend:/app:cached
-      - go-mod-cache:/go/pkg/mod
       - ../src/terraform/clients:/app/terraform/clients
       - ../src/terraform/projects:/app/terraform/projects
-      - ../src/terraform/projects:/app/terraform/networks
+      - ../src/terraform/networks:/app/terraform/networks
+      - ../src/terraform/flavors:/app/terraform/flavors
+      - ../src/backend:/app:cached
+      - go-mod-cache:/go/pkg/mod
     environment:
       - GIN_MODE=debug
       - CGO_ENABLED=0
