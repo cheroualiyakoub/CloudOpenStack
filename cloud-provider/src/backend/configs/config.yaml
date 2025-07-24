@@ -2,7 +2,7 @@ environment: development
 port: 8080
 
 openstack:
-  auth_url: "http://91.99.215.192/identity/v3"
+  auth_url: "http://91.99.215.184/identity/v3"
   username: "admin"
   password: "secret"
   tenant_name: "admin"

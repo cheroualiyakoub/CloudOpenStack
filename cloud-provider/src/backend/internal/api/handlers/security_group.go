@@ -23,7 +23,7 @@ func (h *ProjectHandler) CreateSecurityGroup(c *gin.Context) {
 
     sgDir := fmt.Sprintf("/app/terraform/security_groups/%s", req.Name)
     os.MkdirAll(sgDir, 0755)
-    tfContent := fmt.Sprintf(`
+   tfContent := fmt.Sprintf(`
 resource "openstack_networking_secgroup_v2" "%s" {
   name        = "%s"
   description = "%s"
@@ -39,6 +39,26 @@ resource "openstack_networking_secgroup_rule_v2" "%s_ssh" {
   security_group_id = openstack_networking_secgroup_v2.%s.id
 }
 
+resource "openstack_networking_secgroup_rule_v2" "%s_ssh_ipv6" {
+  direction         = "ingress"
+  ethertype         = "IPv6"
+  protocol          = "tcp"
+  port_range_min    = 22
+  port_range_max    = 22
+  remote_ip_prefix  = "::/0"
+  security_group_id = openstack_networking_secgroup_v2.%s.id
+}
+
+resource "openstack_networking_secgroup_rule_v2" "%s_nodeport" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 30000
+  port_range_max    = 32767
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = openstack_networking_secgroup_v2.%s.id
+}
+
 resource "openstack_networking_secgroup_rule_v2" "%s_k8s_api" {
   direction         = "ingress"
   ethertype         = "IPv4"
@@ -48,7 +68,20 @@ resource "openstack_networking_secgroup_rule_v2" "%s_k8s_api" {
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = openstack_networking_secgroup_v2.%s.id
 }
-`, req.Name, req.Name, req.Description, req.Name, req.Name, req.Name, req.Name)
+
+resource "openstack_networking_secgroup_rule_v2" "%s_internal" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  remote_ip_prefix  = "192.168.100.0/24" // Or use a variable if needed
+  security_group_id = openstack_networking_secgroup_v2.%s.id
+}
+`, req.Name, req.Name, req.Description,
+   req.Name, req.Name,
+   req.Name, req.Name,
+   req.Name, req.Name,
+   req.Name, req.Name,
+   req.Name, req.Name)
 
     tfPath := fmt.Sprintf("%s/security_group.tf", sgDir)
     if err := os.WriteFile(tfPath, []byte(tfContent), 0644); err != nil {

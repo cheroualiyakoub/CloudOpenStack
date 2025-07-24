@@ -70,6 +70,9 @@ func main() {
         v1.POST("/keypairs", projectHandler.CreateKeyPair)
         v1.POST("/images", projectHandler.CreateImage)
         v1.POST("/instances", projectHandler.CreateInstance)
+        v1.POST("/floatingips", projectHandler.CreateFloatingIP)
+        v1.POST("/ports-fips", projectHandler.CreatePortsAndFIPs)
+
     }
 
     // Start server

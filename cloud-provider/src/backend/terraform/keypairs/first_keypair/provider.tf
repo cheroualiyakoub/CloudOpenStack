@@ -19,7 +19,7 @@ provider "openstack" {
 variable "os_auth_url" {
   description = "OpenStack authentication URL"
   type        = string
-  default     = "http://91.99.215.192/identity/v3"
+  default     = "http://91.99.215.184/identity/v3"
 }
 
 variable "os_user_name" {

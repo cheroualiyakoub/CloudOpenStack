@@ -10,7 +10,7 @@ import (
 
 func GetTerraformConf() map[string]string {
     vars := map[string]string{
-        "os_auth_url":    "http://91.99.215.192/identity/v3",
+        "os_auth_url":    "http://91.99.215.184/identity/v3",
         "os_user_name":   "admin",
         "os_password":    "secret",
         "os_tenant_name": "admin",
